@@ -153,13 +153,6 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
     .replace(new RegExp(escapeRegExp(REPLACER), "g"), APP_NAME)
     .replace(initInstructions, "");
 
-  const newDockerfile = pm.lockfile
-    ? dockerfile.replace(
-      new RegExp(escapeRegExp("ADD package.json"), "g"),
-      `ADD package.json ${pm.lockfile}`,
-    )
-    : dockerfile;
-
   updatePackageJson({ APP_NAME, isTypeScript, packageJson });
 
   const fileOperationPromises = [
@@ -184,18 +177,6 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   console.log(
     `
 Setup is almost complete. Follow these steps to finish initialization:
-
-- Start the database:
-  ${pm.run("docker")}
-
-- Run setup (this updates the database):
-  ${pm.run("setup")}
-
-- Run the first build (this generates the server you will run):
-  ${pm.run("build")}
-
-- You're now ready to rock and roll 🤘
-  ${pm.run("dev")}
     `.trim(),
   );
 };
