@@ -99,7 +99,7 @@ const updatePackageJson = ({ APP_NAME, isTypeScript, packageJson }) => {
 };
 
 const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
-  const pm = 'pnpm';
+  const pm = "pnpm";
   const FILE_EXTENSION = isTypeScript ? "ts" : "js";
 
   const README_PATH = path.join(rootDirectory, "README.md");
@@ -123,12 +123,9 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
     dockerfile,
     packageJson,
   ] = await Promise.all([
-    fs.readFile(FLY_TOML_PATH, "utf-8"),
     fs.readFile(README_PATH, "utf-8"),
     fs.readFile(EXAMPLE_ENV_PATH, "utf-8"),
     fs.readFile(DOCKERFILE_PATH, "utf-8"),
-    fs.readFile(CREATE_USER_COMMAND_PATH, "utf-8"),
-    fs.readFile(DELETE_USER_COMMAND_PATH, "utf-8"),
     readFileIfNotTypeScript(isTypeScript, DEPLOY_WORKFLOW_PATH, (s) => YAML.parse(s)),
     PackageJson.load(rootDirectory),
   ]);
@@ -166,32 +163,13 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   updatePackageJson({ APP_NAME, isTypeScript, packageJson });
 
   const fileOperationPromises = [
-    fs.writeFile(FLY_TOML_PATH, toml.stringify(prodToml)),
     fs.writeFile(README_PATH, newReadme),
     fs.writeFile(ENV_PATH, newEnv),
-    fs.writeFile(DOCKERFILE_PATH, newDockerfile),
-    ...cleanupCypressFiles({
-      fileEntries: [
-        [CYPRESS_COMMANDS_PATH, cypressCommands],
-        [CREATE_USER_COMMAND_PATH, createUserCommand],
-        [DELETE_USER_COMMAND_PATH, deleteUserCommand],
-      ],
-      isTypeScript,
-      packageManager: pm,
-    }),
     packageJson.save(),
     fs.copyFile(
       path.join(rootDirectory, "remix.init", "gitignore"),
       path.join(rootDirectory, ".gitignore"),
     ),
-    fs.rm(path.join(rootDirectory, ".github", "ISSUE_TEMPLATE"), {
-      recursive: true,
-    }),
-    fs.rm(path.join(rootDirectory, ".github", "workflows", "format-repo.yml")),
-    fs.rm(path.join(rootDirectory, ".github", "workflows", "lint-repo.yml")),
-    fs.rm(path.join(rootDirectory, ".github", "workflows", "no-response.yml")),
-    fs.rm(path.join(rootDirectory, ".github", "dependabot.yml")),
-    fs.rm(path.join(rootDirectory, ".github", "PULL_REQUEST_TEMPLATE.md")),
     fs.rm(path.join(rootDirectory, ".eslintrc.repo.js")),
     fs.rm(path.join(rootDirectory, "LICENSE.md")),
   ];
