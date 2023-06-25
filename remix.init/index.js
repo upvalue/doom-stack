@@ -8,40 +8,6 @@ const PackageJson = require("@npmcli/package-json");
 const semver = require("semver");
 const YAML = require("yaml");
 
-const cleanupCypressFiles = ({ fileEntries, isTypeScript, packageManager }) =>
-  fileEntries.flatMap(([filePath, content]) => {
-    let newContent = content.replace(
-      new RegExp("npx ts-node", "g"),
-      isTypeScript ? `${packageManager.exec} ts-node` : "node",
-    );
-
-    if (!isTypeScript) {
-      newContent = newContent
-        .replace(new RegExp("create-user.ts", "g"), "create-user.js")
-        .replace(new RegExp("delete-user.ts", "g"), "delete-user.js");
-    }
-
-    return [fs.writeFile(filePath, newContent)];
-  });
-
-const cleanupDeployWorkflow = (deployWorkflow, deployWorkflowPath) => {
-  delete deployWorkflow.jobs.typecheck;
-  deployWorkflow.jobs.deploy.needs = deployWorkflow.jobs.deploy.needs.filter(
-    (need) => need !== "typecheck",
-  );
-
-  return [fs.writeFile(deployWorkflowPath, YAML.stringify(deployWorkflow))];
-};
-
-const cleanupVitestConfig = (vitestConfig, vitestConfigPath) => {
-  const newVitestConfig = vitestConfig.replace(
-    "setup-test-env.ts",
-    "setup-test-env.js",
-  );
-
-  return [fs.writeFile(vitestConfigPath, newVitestConfig)];
-};
-
 const escapeRegExp = (string) =>
   // $& means the whole matched string
   string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -137,35 +103,11 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   const FILE_EXTENSION = isTypeScript ? "ts" : "js";
 
   const README_PATH = path.join(rootDirectory, "README.md");
-  const FLY_TOML_PATH = path.join(rootDirectory, "fly.toml");
   const EXAMPLE_ENV_PATH = path.join(rootDirectory, ".env.example");
   const ENV_PATH = path.join(rootDirectory, ".env");
-  const DEPLOY_WORKFLOW_PATH = path.join(
-    rootDirectory,
-    ".github",
-    "workflows",
-    "deploy.yml",
-  );
   const DOCKERFILE_PATH = path.join(rootDirectory, "Dockerfile");
-  const CYPRESS_SUPPORT_PATH = path.join(rootDirectory, "cypress", "support");
-  const CYPRESS_COMMANDS_PATH = path.join(
-    CYPRESS_SUPPORT_PATH,
-    `commands.${FILE_EXTENSION}`,
-  );
-  const CREATE_USER_COMMAND_PATH = path.join(
-    CYPRESS_SUPPORT_PATH,
-    `create-user.${FILE_EXTENSION}`,
-  );
-  const DELETE_USER_COMMAND_PATH = path.join(
-    CYPRESS_SUPPORT_PATH,
-    `delete-user.${FILE_EXTENSION}`,
-  );
-  const VITEST_CONFIG_PATH = path.join(
-    rootDirectory,
-    `vitest.config.${FILE_EXTENSION}`,
-  );
 
-  const REPLACER = "blues-stack-template";
+  const REPLACER = "doom-stack-template";
 
   const DIR_NAME = path.basename(rootDirectory);
   const SUFFIX = getRandomString(2);
@@ -179,22 +121,15 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
     readme,
     env,
     dockerfile,
-    cypressCommands,
-    createUserCommand,
-    deleteUserCommand,
-    deployWorkflow,
-    vitestConfig,
     packageJson,
   ] = await Promise.all([
     fs.readFile(FLY_TOML_PATH, "utf-8"),
     fs.readFile(README_PATH, "utf-8"),
     fs.readFile(EXAMPLE_ENV_PATH, "utf-8"),
     fs.readFile(DOCKERFILE_PATH, "utf-8"),
-    fs.readFile(CYPRESS_COMMANDS_PATH, "utf-8"),
     fs.readFile(CREATE_USER_COMMAND_PATH, "utf-8"),
     fs.readFile(DELETE_USER_COMMAND_PATH, "utf-8"),
     readFileIfNotTypeScript(isTypeScript, DEPLOY_WORKFLOW_PATH, (s) => YAML.parse(s)),
-    readFileIfNotTypeScript(isTypeScript, VITEST_CONFIG_PATH),
     PackageJson.load(rootDirectory),
   ]);
 
@@ -260,16 +195,6 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
     fs.rm(path.join(rootDirectory, ".eslintrc.repo.js")),
     fs.rm(path.join(rootDirectory, "LICENSE.md")),
   ];
-
-  if (!isTypeScript) {
-    fileOperationPromises.push(
-      ...cleanupDeployWorkflow(deployWorkflow, DEPLOY_WORKFLOW_PATH),
-    );
-
-    fileOperationPromises.push(
-      ...cleanupVitestConfig(vitestConfig, VITEST_CONFIG_PATH),
-    );
-  }
 
   await Promise.all(fileOperationPromises);
 
