@@ -65,6 +65,7 @@ const removeUnusedDependencies = (dependencies, unusedDependencies) =>
 const updatePackageJson = ({ APP_NAME, isTypeScript, packageJson }) => {
   const {
     devDependencies,
+    prisma: { seed: prismaSeed, ...prisma },
     scripts: {
       "format:repo": _repoFormatScript,
       "lint:repo": _repoLintScript,
@@ -83,6 +84,14 @@ const updatePackageJson = ({ APP_NAME, isTypeScript, packageJson }) => {
         isTypeScript ? [] : ["ts-node"],
       ),
     ),
+    prisma: isTypeScript
+      ? { ...prisma, seed: prismaSeed }
+      : {
+        ...prisma,
+        seed: prismaSeed
+          .replace("ts-node", "node")
+          .replace("seed.ts", "seed.js"),
+      },
     scripts: isTypeScript
       ? { ...scripts, typecheck, validate }
       : { ...scripts, validate: validate.replace(" typecheck", "") },
@@ -92,6 +101,11 @@ const updatePackageJson = ({ APP_NAME, isTypeScript, packageJson }) => {
 const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   const pm = "pnpm";
   const FILE_EXTENSION = isTypeScript ? "ts" : "js";
+
+  const README_PATH = path.join(rootDirectory, "README.md");
+  const EXAMPLE_ENV_PATH = path.join(rootDirectory, ".env.example");
+  const ENV_PATH = path.join(rootDirectory, ".env");
+  const DOCKERFILE_PATH = path.join(rootDirectory, "Dockerfile");
 
   const REPLACER = "doom-stack-template";
 
@@ -103,10 +117,26 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
     .replace(/[^a-zA-Z0-9-_]/g, "-");
 
   const [
+    prodContent,
+    readme,
+    env,
+    dockerfile,
     packageJson,
   ] = await Promise.all([
+    fs.readFile(README_PATH, "utf-8"),
+    fs.readFile(EXAMPLE_ENV_PATH, "utf-8"),
+    fs.readFile(DOCKERFILE_PATH, "utf-8"),
+    readFileIfNotTypeScript(isTypeScript, DEPLOY_WORKFLOW_PATH, (s) => YAML.parse(s)),
     PackageJson.load(rootDirectory),
   ]);
+
+  const newEnv = env.replace(
+    /^SESSION_SECRET=.*$/m,
+    `SESSION_SECRET="${getRandomString(16)}"`,
+  );
+
+  const prodToml = toml.parse(prodContent);
+  prodToml.app = prodToml.app.replace(REPLACER, APP_NAME);
 
   const initInstructions = `
 - First run this stack's \`remix.init\` script and commit the changes it makes to your project.
@@ -119,9 +149,15 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   \`\`\`
 `;
 
+  const newReadme = readme
+    .replace(new RegExp(escapeRegExp(REPLACER), "g"), APP_NAME)
+    .replace(initInstructions, "");
+
   updatePackageJson({ APP_NAME, isTypeScript, packageJson });
 
   const fileOperationPromises = [
+    fs.writeFile(README_PATH, newReadme),
+    fs.writeFile(ENV_PATH, newEnv),
     packageJson.save(),
     fs.copyFile(
       path.join(rootDirectory, "remix.init", "gitignore"),
@@ -132,11 +168,6 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   ];
 
   await Promise.all(fileOperationPromises);
-
-  execSync(pm.run("format", "--loglevel warn"), {
-    cwd: rootDirectory,
-    stdio: "inherit",
-  });
 
   console.log(
     `
