@@ -103,9 +103,6 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   const FILE_EXTENSION = isTypeScript ? "ts" : "js";
 
   const README_PATH = path.join(rootDirectory, "README.md");
-  const EXAMPLE_ENV_PATH = path.join(rootDirectory, ".env.example");
-  const ENV_PATH = path.join(rootDirectory, ".env");
-  const DOCKERFILE_PATH = path.join(rootDirectory, "Dockerfile");
 
   const REPLACER = "doom-stack-template";
 
@@ -119,14 +116,9 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   const [
     prodContent,
     readme,
-    env,
-    dockerfile,
     packageJson,
   ] = await Promise.all([
     fs.readFile(README_PATH, "utf-8"),
-    fs.readFile(EXAMPLE_ENV_PATH, "utf-8"),
-    fs.readFile(DOCKERFILE_PATH, "utf-8"),
-    readFileIfNotTypeScript(isTypeScript, DEPLOY_WORKFLOW_PATH, (s) => YAML.parse(s)),
     PackageJson.load(rootDirectory),
   ]);
 
@@ -157,7 +149,6 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
 
   const fileOperationPromises = [
     fs.writeFile(README_PATH, newReadme),
-    fs.writeFile(ENV_PATH, newEnv),
     packageJson.save(),
     fs.copyFile(
       path.join(rootDirectory, "remix.init", "gitignore"),
