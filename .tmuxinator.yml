@@ -1,0 +1,8 @@
+# /Users/me/.tmuxinator/tmuxinator.yml
+
+name: tmuxinator
+root: .
+
+windows:
+  - remix: pnpm remix dev
+  - database: scripts/database.sh
