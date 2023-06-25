@@ -122,14 +122,6 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
     PackageJson.load(rootDirectory),
   ]);
 
-  const newEnv = env.replace(
-    /^SESSION_SECRET=.*$/m,
-    `SESSION_SECRET="${getRandomString(16)}"`,
-  );
-
-  const prodToml = toml.parse(prodContent);
-  prodToml.app = prodToml.app.replace(REPLACER, APP_NAME);
-
   const initInstructions = `
 - First run this stack's \`remix.init\` script and commit the changes it makes to your project.
 
