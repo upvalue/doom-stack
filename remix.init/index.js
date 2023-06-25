@@ -102,8 +102,6 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   const pm = "pnpm";
   const FILE_EXTENSION = isTypeScript ? "ts" : "js";
 
-  const README_PATH = path.join(rootDirectory, "README.md");
-
   const REPLACER = "doom-stack-template";
 
   const DIR_NAME = path.basename(rootDirectory);
@@ -114,11 +112,8 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
     .replace(/[^a-zA-Z0-9-_]/g, "-");
 
   const [
-    prodContent,
-    readme,
     packageJson,
   ] = await Promise.all([
-    fs.readFile(README_PATH, "utf-8"),
     PackageJson.load(rootDirectory),
   ]);
 
@@ -133,14 +128,9 @@ const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
   \`\`\`
 `;
 
-  const newReadme = readme
-    .replace(new RegExp(escapeRegExp(REPLACER), "g"), APP_NAME)
-    .replace(initInstructions, "");
-
   updatePackageJson({ APP_NAME, isTypeScript, packageJson });
 
   const fileOperationPromises = [
-    fs.writeFile(README_PATH, newReadme),
     packageJson.save(),
     fs.copyFile(
       path.join(rootDirectory, "remix.init", "gitignore"),
