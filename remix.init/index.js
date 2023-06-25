@@ -99,7 +99,7 @@ const updatePackageJson = ({ APP_NAME, isTypeScript, packageJson }) => {
 };
 
 const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
-  const pm = getPackageManagerCommand(packageManager);
+  const pm = 'pnpm';
   const FILE_EXTENSION = isTypeScript ? "ts" : "js";
 
   const README_PATH = path.join(rootDirectory, "README.md");
