@@ -1,10 +1,6 @@
 # doom-stack
 
-- no
-  - ui libraries
-  - testing
-  - deployments
-  - (choose your own adventure)
+- ui: tailwind with daisyui, headlessui, heroicons
 - pnpm
 - dprint
 - auxilliary node server in aux/ for whatever purposes

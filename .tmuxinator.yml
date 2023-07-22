@@ -6,4 +6,4 @@ root: .
 windows:
   - remix: pnpm remix dev
   - database: scripts/database.sh
-  - pgtyped: pnpm pgtyped:watch
+  - pgtyped: pnpm pgtyped:watch --uri "postgres://postgres:postgres@localhost/postgres"
