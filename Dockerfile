@@ -5,7 +5,7 @@ WORKDIR /app
 RUN apt-get update
 RUN apt-get install --yes nodejs npm supervisor
 # Install pnpm for package management
-RUN npm install -g pnpm pm2
+RUN npm install -g pnpm 
 # To cache node installs
 COPY pnpm-lock.yaml package.json .
 RUN pnpm install
