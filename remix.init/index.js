@@ -2,6 +2,7 @@ const { execSync } = require("child_process");
 const crypto = require("crypto");
 const fs = require("fs/promises");
 const path = require("path");
+const process = require("process");
 
 const toml = require("@iarna/toml");
 const PackageJson = require("@npmcli/package-json");
@@ -90,6 +91,7 @@ const updatePackageJson = ({ APP_NAME, isTypeScript, packageJson }) => {
 };
 
 const main = async ({ isTypeScript, packageManager, rootDirectory }) => {
+  const nodeAux = process.env.DOOM_NODE_AUX !== 'false';
   const pm = "pnpm";
   const FILE_EXTENSION = isTypeScript ? "ts" : "js";
 
